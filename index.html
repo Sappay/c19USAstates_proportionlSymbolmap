@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=utf-8 />
+    <title>Final Project</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+    <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+
+    <style>
+        body {margin: 0; padding: 0; background: whitesmoke; font-family: Lato, sans-serif; color: #0D0000;}
+        header {padding: 6px 10%;} h1 {display: inline-block; margin-right: 20px; color: #a0a605;}
+        h2 {display: inline-block; color: #a04a34;} #map {width: 100%; height: 600px;} footer {padding: 6px 10%; width: 80%;} p {font-size: 1em; color: red;}
+    </style>
+</head>
+
+<body>
+    <header><h1>COVID-19</h1><h2>: Rapidly Engulfing the World Super Power??? </h2></header>
+
+    <div id='map'></div><script src="usgrabbedc19.json"></script>
+    <script>
+		var map = L.map('map').setView([37.8, -96], 4);
+
+ 
+     var tilelet = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+          subdomains: 'abcd',
+          maxZoom: 10
+      });
+	var tiles = L.tileLayer('https://tile.openstreetmap.bzh/br/{z}/{x}/{y}.png', {
+		maxZoom: 19,
+		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles courtesy of <a href="http://www.openstreetmap.bzh/" target="_blank">Breton OpenStreetMap Team</a>',
+	});
+ // var recover = feature.properties.Cum_Recovered
+      var highlyAffected = L.geoJson(covid19US, {
+          pointToLayer: function(feature,latlng) {
+			  //console.log(feature.properties)
+              return L.circleMarker(latlng, {
+                 color: 'red',
+                 weight: 2,
+                 fillColor: 'pink',
+                 fillOpacity: .50,
+                 radius: getRadius(feature.properties.Confirmed) //step4
+              });   
+          },
+          
+      filter : function(feature, layer){
+              if(feature.properties.Confirmed > 5000){
+                  return true
+              };
+             
+			  },
+
+		//step 5
+		onEachFeature : function(feature,layer) {
+		layer.on('mouseover', function() {
+		layer.setStyle({
+			fillColor: 'blue'
+		});
+	});
+	layer.on('mouseout', function() {
+		layer.setStyle({
+			fillColor: 'brown'
+		});
+	});
+          //step 6  
+          
+   var name1 = feature.properties.Province_S
+   var period = feature.properties.Last_Updat
+   var name2 = feature.properties.Admin2
+   var confirm = feature.properties.Confirmed
+   var death = feature.properties.Deaths
+                                        
+  var popup = ("<b> State: " +name1+ ": "+ name2 +"</b><br> Data as @: " + period + "<br>" + "Cumulative Confirmed Cases: " +confirm+"<br>" +" Cumulative Death: " +death)
+			   layer.bindPopup(popup)
+  }
+}).addTo(map);
+      
+// Base layers
+    var hydroBase = L.tileLayer('https://{s}.tile.openstreetmap.se/hydda/base/{z}/{x}/{y}.png', {
+		attribution: '<a href="http://openstreetmap.se/" target="_blank">OpenStreetMap Sweden</a><br><a href="https://sappay.github.io/Alternative-Energy-Sources/.">Snr. Sapp</a> | Web Mapping | Fall Semester 2019'
+    });
+    var esri_World = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri <br><a href="https://sappay.github.io/Alternative-Energy-Sources/.">Snr. Sapp</a> | Web Mapping | Fall Semester 2019'
+    });
+		
+	 var grayscale = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap; href="https://sappay.github.io/Alternative-Energy-Sources/.">Snr. Sapp</a> | Web Mapping | Fall Semester 2019'
+      }); 
+		
+	var baseLayers = {
+        'Esri: Satellite Map': esri_World,
+        'Open Street Map': hydroBase,
+		'Grayscale' : grayscale,
+		'Tile Layer' : tiles,
+		'Tidy Tiles' : tilelet,
+    };
+      
+      tilelet.addTo(map);	
+		
+	var affected = L.geoJSON(covid19US, {
+    	pointToLayer: function(feature, latlng) {
+        return L.circleMarker(latlng);
+    },
+	
+	style: function(feature) {
+		return {
+			color: '#e14ea2',
+			fillColor: '#1a320f',
+			radius: getRadius(feature.properties.Confirmed * 2)} //multiplied radius property by 2 inorder to improve visualization of the feature
+		},
+	
+	onEachFeature : function(feature, layer) {
+//     console.log(layer)
+		layer.on('mouseover',function(){
+			layer.setStyle({
+				fillColor: '#0ab021'
+		}).bindPopup("<b> State: " +feature.properties.Province_S+ ": "+ feature.properties.Admin2 +"</b><br> Data as @: " + feature.properties.Last_Updat + "<br>" + "Cumulative Confirmed Cases: " +feature.properties.Confirmed+"<br>" +" Cumulative Death: " +feature.properties.Deaths)
+			
+		layer.on('mouseout', function() {
+			layer.setStyle({
+				fillColor: '#a00123'
+    		});
+		});      
+        	})
+	},
+	
+	filter: function(feature) {
+        if(feature.properties.Confirmed < 5000 && feature.properties.Confirmed > 500) {
+            return feature
+		}
+		console.log(feature.properties)
+    }	
+	
+}).addTo(map);	
+		
+var leastaffected = L.geoJSON(covid19US, {
+    	pointToLayer: function(feature, latlng) {
+        return L.circleMarker(latlng);
+    },
+	
+	style: function(feature) {
+		return {
+			color: '#3ea132',
+			fillColor: '#13aed2',
+			radius: getRadius(feature.properties.Confirmed * 15)} //multiplied radius property by 15 in order to improve visualization of the feature
+		},
+	
+	onEachFeature : function(feature, layer) {
+//     console.log(layer)
+		layer.on('mouseover',function(){
+			layer.setStyle({
+				fillColor: '#0ab021'
+		}).bindPopup("<b> State: " +feature.properties.Province_S+ ": "+ feature.properties.Admin2 +"</b><br> Data as @: " + feature.properties.Last_Updat + "<br>" + "Cumulative Confirmed Cases: " +feature.properties.Confirmed+"<br>" +" Cumulative Death: " +feature.properties.Deaths)
+			
+		layer.on('mouseout', function() {
+			layer.setStyle({
+				fillColor: '#a2e123'
+    		});
+		});      
+        	})
+	},
+	
+	filter: function(feature) {
+        if(feature.properties.Confirmed > 0 && feature.properties.Confirmed <= 500) {
+            return feature
+		}
+		//console.log(feature.properties)
+    }	
+	
+}).addTo(map);
+
+        function getRadius(area){
+        var radius = Math.sqrt(area/Math.PI);
+        return radius/5 
+    };
+	
+	var sourceLayers = {
+        "Highly Affected States": highlyAffected,
+		"Affected States" : affected,
+		"Moderately Affected States" : leastaffected,
+	};
+	
+	L.control.scale({
+        position: 'bottomleft'
+	});
+	
+	L.control.layers(baseLayers, sourceLayers, {autoZIndex:true, collapsed:false }).addTo(map);
+	
+    </script>
+    
+</body>
+
+</html>
